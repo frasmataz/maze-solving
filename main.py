@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import numpy
@@ -18,25 +18,58 @@ def openMaze(filename):
         newMaze.append(row)
     return newMaze
 
-def printMaze(direction):
-    for y in maze:
-        for x in y:
-            if x == 3:
-                if direction == "down":
+def printMaze(trail):
+    for x in range(0, maze.shape[0]):
+        for y in range(0, maze.shape[1]):
+            try:    #If location appears in trail, draw arrow
+                if trail[(x,y)] == "down":
                     print ('↓', end='', sep='')
-                elif direction == "left":
+                elif trail[(x,y)] == "left":
                     print ('←', end='', sep='')
-                elif direction == "up":
+                elif trail[(x,y)] == "up":
                     print ('↑', end='', sep='')
-                elif direction == "right":
+                elif trail[(x,y)] == "right":
                     print ('→', end='', sep='')
-            if x == 1:
-                print ('█', end='', sep='')
-            elif x == 0:
-                print (' ', end='', sep='')
-            elif x == 2:
-                print ('+', end='', sep='')
+            except: #Else, draw maze tile
+                if maze[x][y] == 0:
+                    print (' ', end='', sep='')
+                elif maze[x][y] == 1:
+                    print ('█', end='', sep='')
         print('')
+
+def clockwise(direction):
+    if direction == "up":
+        return "right"
+    elif direction == "right":
+        return "down"
+    elif direction == "down":
+        return "left"
+    elif direction == "left":
+        return "up"
+
+def antiClockwise(direction):
+    if direction == "up":
+        return "left"
+    elif direction == "left":
+        return "down"
+    elif direction == "down":
+        return "right"
+    elif direction == "right":
+        return "up"
+
+def getNextPos(pos, direction):
+    if direction == "up":
+        return [pos[0]-1,pos[1]]
+    elif direction == "left":
+        return [pos[0],pos[1]-1]
+    elif direction == "down":
+        return [pos[0]+1,pos[1]]
+    elif direction == "right":
+        return [pos[0],pos[1]+1]
+
+def getNextPosVal(pos, direction):
+    nextPos = getNextPos(pos, direction)
+    return maze[nextPos[0],nextPos[1]]
 
 maze = numpy.array(openMaze("maze"))
 printMaze(None)
@@ -44,7 +77,7 @@ printMaze(None)
 entrance = None
 exit = None
 
-#find entrance
+#Find entrance
 pos = 0
 for x in maze[0,:]:
     if x == 0:
@@ -53,7 +86,7 @@ for x in maze[0,:]:
 
 print ("Entrance:\t" + str(entrance))
 
-#find exit
+#Find exit
 pos = 0
 for x in maze[maze.shape[0]-1,:]:
     if x == 0:
@@ -62,55 +95,29 @@ for x in maze[maze.shape[0]-1,:]:
 
 print ("Exit:\t\t" + str(exit))
 
-#hug the wall
-found = False
-pos = entrance
-direction = "down"
-trail = []
+print ("Solving...")
 
-while found == False:
-    trail.append(pos)
-    if pos == exit:
-        found = True
-    else:
-        #maze[pos[0],pos[1]] = 3
-        #printMaze(direction)
-        #print
-        #maze[pos[0],pos[1]] = 0
-        if direction == "down":
-            if maze[pos[0],pos[1]+1] == 0:
-                pos = [pos[0],pos[1]+1]
-                direction = "right"
-            elif maze[pos[0]+1,pos[1]] == 0:
-                pos = [pos[0]+1,pos[1]]
-            else:
-                direction = "left"
-        elif direction == "left":
-            if maze[pos[0]+1,pos[1]] == 0:
-                pos = [pos[0]+1,pos[1]]
-                direction = "down"
-            elif maze[pos[0],pos[1]-1] == 0:
-                pos = [pos[0],pos[1]-1]
-            else:
-                direction = "up"
-        elif direction == "up":
-            if maze[pos[0],pos[1]-1] == 0:
-                pos = [pos[0],pos[1]-1]
-                direction = "left"
-            elif maze[pos[0]-1,pos[1]] == 0:
-                pos = [pos[0]-1,pos[1]]
-            else:
-                direction = "right"
-        elif direction == "right":
-            if maze[pos[0]-1,pos[1]] == 0:
-                pos = [pos[0]-1,pos[1]]
-                direction = "up"
-            elif maze[pos[0],pos[1]+1] == 0:
-                pos = [pos[0],pos[1]+1]
-            else:
-                direction = "down"
+#Set up status variables
+found = False       #Am I at the exit?
+pos = entrance      #Start at the entrance
+direction = "down"  #Start facing down
+trail = {}          #Clear the trail
+steps = 0           #Clear step counter
 
-for t in trail:
-    maze[t[0],t[1]] = 2
+#Hug the wall approach -- The 'robot' always hugs the wall to it's left.
+while pos != exit:                                          #While not at exit
+    trail[(pos[0],pos[1])] = direction                      #Add current position and direction to trail
+    steps += 1                                              #Count step
 
-printMaze(None)
+    if getNextPosVal(pos,antiClockwise(direction)) == 0:    #Try to turn anti-clockwise and go
+        pos = getNextPos(pos,antiClockwise(direction))
+        direction = antiClockwise(direction)
+    elif getNextPosVal(pos,direction) == 0:                 #Try to go forward
+        pos = getNextPos(pos,direction)
+    else:                                                   #Try to turn clockwise
+        direction=clockwise(direction)
+
+#Finished!
+print("Solved!  Found the exit in " + str(steps) + " steps!")
+
+printMaze(trail)
