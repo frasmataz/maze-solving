@@ -71,7 +71,7 @@ def getNextPosVal(pos, direction):
     nextPos = getNextPos(pos, direction)
     return maze[nextPos[0],nextPos[1]]
 
-maze = numpy.array(openMaze("maze"))
+maze = numpy.array(openMaze("hardmaze"))
 printMaze(None)
 
 entrance = None
@@ -118,6 +118,7 @@ while pos != exit:                                          #While not at exit
         direction=clockwise(direction)
 
 #Finished!
+trail[(pos[0],pos[1])] = direction      #Add last step to trail
 print("Solved!  Found the exit in " + str(steps) + " steps!")
 
 printMaze(trail)
