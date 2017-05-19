@@ -21,7 +21,7 @@ def openMaze(filename):
 def printMaze(trail):
     for x in range(0, maze.shape[0]):
         for y in range(0, maze.shape[1]):
-            try:    #If location appears in trail, draw arrow
+            if trail is not None and (x,y) in trail:    #If location appears in trail, draw arrow
                 if trail[(x,y)] == "down":
                     print ('↓', end='', sep='')
                 elif trail[(x,y)] == "left":
@@ -30,7 +30,9 @@ def printMaze(trail):
                     print ('↑', end='', sep='')
                 elif trail[(x,y)] == "right":
                     print ('→', end='', sep='')
-            except: #Else, draw maze tile
+                else:
+                    print (str(trail[(x,y)].countChildren()), end='', sep='')
+            else: #Else, draw maze tile
                 if maze[x][y] == 0:
                     print (' ', end='', sep='')
                 elif maze[x][y] == 1:
@@ -71,7 +73,7 @@ def getNextPosVal(pos, direction):
     nextPos = getNextPos(pos, direction)
     return maze[nextPos[0],nextPos[1]]
 
-maze = numpy.array(openMaze("hardmaze"))
+maze = numpy.array(openMaze("easymaze"))
 printMaze(None)
 
 entrance = None
@@ -122,3 +124,35 @@ trail[(pos[0],pos[1])] = direction      #Add last step to trail
 print("Solved!  Found the exit in " + str(steps) + " steps!")
 
 printMaze(trail)
+
+class Vertex:
+    def __init__(self):
+        self.edges = []
+
+    def addChild(self, vertex):
+        self.edges.append(vertex)
+
+    def countChildren(self):
+        return len(self.edges)
+
+def graphMaze(maze):
+    graph = {}
+
+    for x in range(0, maze.shape[0]):
+        for y in range(0, maze.shape[1]):
+            if maze[x][y] == 0:
+                vertex = Vertex()
+                graph[(x,y)] = vertex
+
+                if (x-1,y) in graph:
+                    graph[(x-1,y)].addChild(graph[(x,y)])
+                    graph[(x,y)].addChild(graph[(x-1,y)])
+
+                if (x,y-1) in graph:
+                    graph[(x,y-1)].addChild(graph[(x,y)])
+                    graph[(x,y)].addChild(graph[(x,y-1)])
+
+    return graph
+
+print()
+printMaze( graphMaze(maze) )
